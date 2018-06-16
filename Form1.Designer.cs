@@ -191,7 +191,7 @@
             this.Name = "Form1";
             this.ShowIcon = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "SPF Converter";
+            this.Text = "SPF";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.MouseLeave += new System.EventHandler(this.Form1_MouseLeave);
             this.Resize += new System.EventHandler(this.Form1_Resize);

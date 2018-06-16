@@ -7,3 +7,4 @@ C:\Projects\SPF\obj\Release\SPF.csproj.GenerateResource.Cache
 C:\Projects\SPF\obj\Release\SPF.csproj.CoreCompileInputs.cache
 C:\Projects\SPF\obj\Release\SPF.exe
 C:\Projects\SPF\obj\Release\SPF.pdb
+C:\Projects\SPF\obj\Release\SPF.csprojResolveAssemblyReference.cache
