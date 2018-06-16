@@ -1,0 +1,9 @@
+C:\Projects\SPF\bin\Release\SPF.exe.config
+C:\Projects\SPF\bin\Release\SPF.exe
+C:\Projects\SPF\bin\Release\SPF.pdb
+C:\Projects\SPF\obj\Release\SPF.Form1.resources
+C:\Projects\SPF\obj\Release\SPF.Properties.Resources.resources
+C:\Projects\SPF\obj\Release\SPF.csproj.GenerateResource.Cache
+C:\Projects\SPF\obj\Release\SPF.csproj.CoreCompileInputs.cache
+C:\Projects\SPF\obj\Release\SPF.exe
+C:\Projects\SPF\obj\Release\SPF.pdb

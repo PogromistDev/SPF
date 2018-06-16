@@ -17,22 +17,60 @@ namespace SPF
         Bitmap toolStripTransparencyBitmap;
 
         Rectangle toolStripRectangle;
-        Brush toolStripBrush = new SolidBrush(Color.FromArgb(127, 127, 127, 127));
+        SolidBrush toolStripBrush = new SolidBrush(Color.FromArgb(255, 231, 231, 231));
 
         string pathToFile;
 
         float xscale = 1, yscale = 1;
-        int x = 0, y = 0;
+        int xx = 0, yy = 0;
+        bool move = false;
+
+        string filter = "Portable network graphics (*.png)|*.png|Joint Photographic Experts Group (*.jpg, *.jpeg)|*.jpg;*.jpeg|Bitmap (*.bmp)|*.bmp";
+        string filter2 = "Strip format (*.spf)|*.spf";
+
+        OpenFileDialog openDialog;
+        SaveFileDialog saveDialog, saveDialog2;
 
         public Form1()
         {
             InitializeComponent();
 
             pictureBox1.MouseWheel += pictureBox1_MouseWheel;
+
             //toolStrip1.BackColor = Color.FromArgb(167, 127, 127, 127);
 
             //pictureBox1.Controls.Add(toolStrip1);
         }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            //CreateSPF();
+
+            toolStripRectangle = new Rectangle(0, 0, toolStrip1.Width, toolStrip1.Height);
+
+            toolStripTransparencyBitmap = new Bitmap(Screen.PrimaryScreen.Bounds.Width, toolStrip1.Height);
+
+            openDialog = new OpenFileDialog
+            {
+                Filter = filter
+            };
+
+            saveDialog = new SaveFileDialog
+            {
+                AddExtension = true,
+                Filter = filter,
+                DefaultExt = "png"
+            };
+
+            saveDialog2 = new SaveFileDialog
+            {
+                AddExtension = true,
+                Filter = filter2,
+                DefaultExt = "spf"
+            };
+        }
+
+        //Functions
 
         private void CreateSPF()
         {
@@ -71,17 +109,21 @@ namespace SPF
         {
             FileStream fs = new FileStream("image.spf", FileMode.Open);
             BinaryReader br = new BinaryReader(fs, Encoding.ASCII);
-
-            br.BaseStream.Seek(2, SeekOrigin.Begin);
-
+            
             Color color;
-            int width, height, stripCount, length, off = 0, x = 0, xx, yy;
+            int width, height, stripCount, length, off = 0, x = 0, xx = 0, yy = 0;
             byte r, g, b;
+
+            br.ReadChars(2);
+
+            //Reading image properties
 
             width = br.ReadInt32();
             height = br.ReadInt32();
 
             stripCount = br.ReadInt32();
+
+            //
 
             bit = new Bitmap(width, height);
 
@@ -89,12 +131,22 @@ namespace SPF
 
             for (int y = 0; y < stripCount; y++)
             {
-                length = (toolStripNButton.Checked == true ? 1: br.ReadInt32());
+                if (toolStripNButton.Checked)
+                {
+                    length = 1;
+                    br.BaseStream.Seek(4, SeekOrigin.Current);
+                }
+                else
+                {
+                    length = br.ReadInt32();
+                }
+
+                //Reading pixel's color components
 
                 r = br.ReadByte();
                 g = br.ReadByte();
                 b = br.ReadByte();
-                br.ReadByte();
+                br.BaseStream.Seek(1, SeekOrigin.Current);
 
                 if (toolStripCButton.Checked)
                 {
@@ -113,6 +165,8 @@ namespace SPF
                     bit.SetPixel(xx, yy, color);
                 }
 
+
+
                 off = x;
             }
 
@@ -123,7 +177,7 @@ namespace SPF
 
         private void ConvertToSPF()
         {
-            FileStream fs = new FileStream("image.spf", FileMode.Create);
+            FileStream fs = new FileStream(String.Concat(Path.GetDirectoryName(pathToFile), "\\", Path.GetFileNameWithoutExtension(pathToFile), ".spf"), FileMode.Create);
             BinaryWriter bw = new BinaryWriter(fs, Encoding.ASCII);
 
             Color color;
@@ -178,28 +232,28 @@ namespace SPF
             bw.Close();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
-        {
-            //CreateSPF();
-            ReadSPF();
-
-            toolStripRectangle = new Rectangle(0, 0, toolStrip1.Width, toolStrip1.Height);
-
-            toolStripTransparencyBitmap = new Bitmap(Screen.PrimaryScreen.Bounds.Width, toolStrip1.Height);
-        }
+        //Events
 
         private void pictureBox1_Paint(object sender, PaintEventArgs e)
         {
-            float left = pictureBox1.ClientSize.Width / 2 - (bit.Width * xscale / 2);
-            float top = pictureBox1.ClientSize.Height / 2 - (bit.Height * yscale / 2);
+            if (bit != null)
+            {
+                float left = pictureBox1.ClientSize.Width / 2 - (bit.Width * xscale / 2);
+                float top = pictureBox1.ClientSize.Height / 2 - (bit.Height * yscale / 2);
 
-            RectangleF rect = new RectangleF(left, top, bit.Width * xscale, bit.Height * yscale);
-            SolidBrush br = new SolidBrush(Color.FromArgb(127, 0, 0, 0));
+                RectangleF rect = new RectangleF(left, top, (bit.Width - 1) * xscale, (bit.Height - 1) * yscale);
+                SolidBrush br = new SolidBrush(Color.FromArgb(127, 0, 0, 0));
 
-            e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
-            e.Graphics.Clear(Color.DimGray);
-            e.Graphics.FillRectangle(br, rect.X, rect.Y, rect.Width, rect.Height);
-            e.Graphics.DrawImage(bit, rect);
+                e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+                e.Graphics.Clear(Color.DimGray);
+
+                e.Graphics.FillRectangle(br, rect);
+
+                e.Graphics.TranslateTransform(left, top);
+                e.Graphics.ScaleTransform(xscale, yscale);
+                e.Graphics.DrawImage(bit, 0, 0);
+            }
+            
         }
 
         private void pictureBox1_MouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -211,6 +265,98 @@ namespace SPF
             
         }
 
+        private void convertButton_Click(object sender, EventArgs e)
+        {
+            ConvertToSPF();
+        }
+
+        private void toolStripButton1_Click(object sender, EventArgs e)
+        {
+            DialogResult res = saveDialog2.ShowDialog();
+            if (res == DialogResult.OK)
+            {
+                pathToFile = saveDialog2.FileName;
+                ConvertToSPF();
+                pictureBox1.Invalidate();
+            }
+        }
+
+        private void toolStripButton2_Click(object sender, EventArgs e)
+        {
+            if (saveDialog.ShowDialog() == DialogResult.OK)
+            {
+                bit.Save(saveDialog.FileName);
+            }
+            
+        }
+
+        private void toolStrip1_Paint(object sender, PaintEventArgs e)
+        {
+            toolStripRectangle.Width = Width;
+
+            pictureBox1.DrawToBitmap(toolStripTransparencyBitmap, toolStripRectangle);
+
+
+
+            //Bitmap img = new Bitmap(toolStripTransparencyBitmap);
+            //Bitmap blurPic = new Bitmap(img.Width, img.Height);
+
+            //Int32 avgR = 0, avgG = 0, avgB = 0;
+            //Int32 blurPixelCount = 0;
+
+
+            //for (int y = 0; y < img.Height; y++)
+            //{
+            //    for (int x = 0; x < img.Width; x++)
+            //    {
+            //        Color pixel = img.GetPixel(x, y);
+            //        avgR += pixel.R;
+            //        avgG += pixel.G;
+            //        avgB += pixel.B;
+
+            //        blurPixelCount++;
+            //    }
+            //}
+
+            //avgR = avgR / blurPixelCount;
+            //avgG = avgG / blurPixelCount;
+            //avgB = avgB / blurPixelCount;
+
+            //for (int y = 0; y < img.Height; y++)
+            //{
+            //    for (int x = 0; x < img.Width; x++)
+            //    {
+            //        blurPic.SetPixel(x, y, Color.FromArgb(avgR, avgG, avgB));
+            //    }
+            //}
+
+
+            e.Graphics.Clear(toolStrip1.BackColor);
+            //e.Graphics.DrawImage(blurPic, 0, 0);
+            e.Graphics.FillRectangle(toolStripBrush, toolStripRectangle);
+        }
+
+        private void toolStrip1_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (move)
+            {
+                Left = Cursor.Position.X - xx;
+                Top = Cursor.Position.Y - yy;
+            }
+        }
+
+        private void toolStrip1_MouseUp(object sender, MouseEventArgs e)
+        {
+            move = false;
+        }
+
+        private void toolStrip1_MouseDown(object sender, MouseEventArgs e)
+        {
+            xx = e.X;
+            yy = e.Y;
+            move = true;
+        }
+
         private void Form1_Resize(object sender, EventArgs e)
         {
             pictureBox1.Width = ClientSize.Width;
@@ -220,77 +366,21 @@ namespace SPF
             toolStrip1.Invalidate();
         }
 
-        private void convertButton_Click(object sender, EventArgs e)
+        private void Form1_MouseLeave(object sender, EventArgs e)
         {
-            ConvertToSPF();
-        }
-
-        private void toolStripButton1_Click(object sender, EventArgs e)
-        {
-            pathToFile = filePath.Text;
-            ConvertToSPF();
-            pictureBox1.Invalidate();
-        }
-
-        private void toolStrip1_Paint(object sender, PaintEventArgs e)
-        {
-            toolStripRectangle.Width = Width;
-
-            pictureBox1.DrawToBitmap(toolStripTransparencyBitmap, toolStripRectangle);
-
-            //
-
-            Bitmap img = new Bitmap(toolStripTransparencyBitmap);
-            Bitmap blurPic = new Bitmap(img.Width, img.Height);
-
-            Int32 avgR = 0, avgG = 0, avgB = 0;
-            Int32 blurPixelCount = 0;
-
-            for (int y = 0; y < img.Height; y++)
-            {
-                for (int x = 0; x < img.Width; x++)
-                {
-                    Color pixel = img.GetPixel(x, y);
-                    avgR += pixel.R;
-                    avgG += pixel.G;
-                    avgB += pixel.B;
-
-                    blurPixelCount++;
-                }
-            }
-
-            avgR = avgR / blurPixelCount;
-            avgG = avgG / blurPixelCount;
-            avgB = avgB / blurPixelCount;
-
-            for (int y = 0; y < img.Height; y++)
-            {
-                for (int x = 0; x < img.Width; x++)
-                {
-                    blurPic.SetPixel(x, y, Color.FromArgb(avgR, avgG, avgB));
-                }
-            }
-
-            e.Graphics.Clear(toolStrip1.BackColor);
-            e.Graphics.DrawImage(blurPic, 0, 0);
-            e.Graphics.FillRectangle(toolStripBrush, toolStripRectangle);
-        }
-
-        private void toolStripButton2_Click(object sender, EventArgs e)
-        {
-            bit.Save("transformed.png");
+            move = false;
         }
 
         private void toolStripButton3_Click(object sender, EventArgs e)
         {
-            OpenFileDialog f = new OpenFileDialog();
-            f.ShowDialog();
+            if (openDialog.ShowDialog() == DialogResult.OK)
+            {
+                pathToFile = openDialog.FileName;
+                filePath.Text = openDialog.FileName;
 
-            pathToFile = f.FileName;
-            filePath.Text = f.FileName;
-
-            bit = new Bitmap(f.FileName);
-            pictureBox1.Invalidate();
+                bit = new Bitmap(openDialog.FileName);
+                pictureBox1.Invalidate();
+            }
         }
 
         private void renderButton_Click(object sender, EventArgs e)
