@@ -8,102 +8,70 @@ using System.IO;
 
 namespace SPF
 {
-    public class SPFInfo
+    public class SPFFile
     {
-        public Bitmap bit;
+        //header
+
+        public char[] signature;
+        public int width, height;
         public int stripCount;
+        public SPFStrip[] strips;
 
-        public SPFInfo(Bitmap bit, int stripCount)
+        //cache
+
+        private Bitmap original;
+        private Bitmap normalized;
+        private Bitmap colorized;
+        private Bitmap colorizedNormalized;
+
+        //constructors
+
+        public SPFFile() {}
+
+        public SPFFile(Stream stream)
         {
-            this.bit = bit;
-            this.stripCount = stripCount;
-        }
-    }
+            BinaryReader br = new BinaryReader(stream);
 
-    public static class SPF
-    {
-        public static SPFInfo ReadSPF(string pathToFile, bool colorize = false, bool normalize = false)
-        {
-            try
+            signature = br.ReadChars(2);
+
+            width = br.ReadInt32();
+            height = br.ReadInt32();
+
+            stripCount = br.ReadInt32();
+
+            strips = new SPFStrip[stripCount];
+
+            for (int i = 0; i < stripCount; i++)
             {
-                FileStream fs = new FileStream(pathToFile, FileMode.Open);
-                BinaryReader br = new BinaryReader(fs, Encoding.ASCII);
+                int length;
+                byte r, g, b, a;
 
-                Color color;
-                int width, height, stripCount, length, off = 0, x = 0, xx = 0, yy = 0;
-                byte r, g, b, a = 255;
+                length = br.ReadInt32();
 
-                br.BaseStream.Seek(2, SeekOrigin.Begin);
+                r = br.ReadByte();
+                g = br.ReadByte();
+                b = br.ReadByte();
+                a = br.ReadByte();
 
-                //Reading image properties
-
-                width = br.ReadInt32();
-                height = br.ReadInt32();
-
-                stripCount = br.ReadInt32();
-
-                //
-
-                Bitmap bit = new Bitmap(width, height);
-                SPFInfo spfInfo = new SPFInfo(bit, stripCount);
-
-                Random rand = new Random();
-
-                for (int y = 0; y < stripCount; y++)
-                {
-                    if (normalize)
-                    {
-                        length = 1;
-                        br.BaseStream.Seek(4, SeekOrigin.Current);
-                    }
-                    else
-                    {
-                        length = br.ReadInt32();
-                    }
-
-                    //Reading pixel's color components
-
-                    r = br.ReadByte();
-                    g = br.ReadByte();
-                    b = br.ReadByte();
-                    a = br.ReadByte();
-
-                    if (colorize)
-                    {
-                        r = (byte)rand.Next(255);
-                        g = (byte)rand.Next(255);
-                        b = (byte)rand.Next(255);
-                    }
-
-                    color = Color.FromArgb(a, r, g, b);
-
-                    for (; x < off + length; x++)
-                    {
-                        xx = x % width;
-                        yy = x / width;
-
-                        bit.SetPixel(xx, yy, color);
-                    }
-
-                    off = x;
-                }
-
-                br.Close();
-                return spfInfo;
+                strips[i] = new SPFStrip(length, Color.FromArgb(a, r, g, b));
             }
-            catch (Exception)
-            {
-                return null;
-            }
-            
+
+            br.Close();
         }
 
-        public static void ConvertToSPF(string pathToFile, Bitmap bit)
+        public static SPFFile FromFile(string pathToFile)
         {
-            FileStream fs = new FileStream(pathToFile, FileMode.Create);
-            BinaryWriter bw = new BinaryWriter(fs, Encoding.ASCII);
+            FileStream fs = new FileStream(pathToFile, FileMode.Open);
 
+            SPFFile spfFile = new SPFFile(fs);
+            return spfFile;
+        }
+
+        public SPFFile(Bitmap bit)
+        {
             Color color;
+            List<SPFFile.SPFStrip> strips = new List<SPFFile.SPFStrip>();
+
             int x = 0;
             int xx = 0, yy = 0;
 
@@ -112,12 +80,11 @@ namespace SPF
 
             int imageByteNumber = bit.Width * bit.Height;
 
-            bw.Write(new char[] { 'S', 'P' });
+            signature = new char[] { 'S', 'P' };
 
-            bw.Write(bit.Width); // width
-            bw.Write(bit.Height); // height
+            width = bit.Width; // width
+            height = bit.Height; // height
 
-            bw.Write(0); // strip count
 
             while (x < imageByteNumber)
             {
@@ -138,21 +105,136 @@ namespace SPF
                     yy = x / bit.Width;
                 }
 
-                bw.Write(length);
-                bw.Write(color.R);
-                bw.Write(color.G);
-                bw.Write(color.B);
-                bw.Write(color.A);
+                /*
+                if (length == 1)
+                {
+                    length = -1;
+                    long curOff = bw.BaseStream.Position, lastOff;
+                    bw.Write(length);
+
+                    x++;
+
+                    xx = x % bit.Width;
+                    yy = x / bit.Width;
+
+                    Color col = bit.GetPixel(xx, yy);
+
+                    while ((x < imageByteNumber) && (color != col))
+                    {
+                        bw.Write(color.R);
+                        bw.Write(color.G);
+                        bw.Write(color.B);
+                        bw.Write(color.A);
+
+                        color = col;
+
+                        length--;
+
+                        x++;
+
+                        xx = Math.Min(x % bit.Width, bit.Width-1);
+                        yy = Math.Min(x / bit.Width, bit.Height-1);
+
+                        col = bit.GetPixel(xx, yy);
+                    }
+
+                    lastOff = bw.BaseStream.Position;
+
+                    bw.BaseStream.Seek(curOff, SeekOrigin.Begin);
+                    bw.Write(length);
+                    bw.BaseStream.Seek(lastOff, SeekOrigin.Begin);
+
+                }
+                */
+
+                strips.Add(new SPFFile.SPFStrip(length, color));
 
                 stripCount++;
 
                 length = 1;
             }
 
-            bw.BaseStream.Seek(10, SeekOrigin.Begin);
+            this.stripCount = stripCount;
+            this.strips = strips.ToArray();
+        }
+
+        //methods
+
+        public Bitmap ToBitmap(bool colorize = false, bool normalize = false)
+        {
+            Bitmap bit = new Bitmap(width, height);
+            Color color;
+            Random rand = new Random();
+            int x = 0, xx, yy, length;
+
+            for (int i = 0; i < stripCount; i++)
+            {
+                length = (normalize ? 1 : strips[i].length);
+                color = (colorize ? Color.FromArgb(strips[i].color.A, rand.Next(255), rand.Next(255), rand.Next(255)) : strips[i].color);
+                for (int j = 0; j < length; j++)
+                {
+                    xx = x % width;
+                    yy = x / width;
+
+                    bit.SetPixel(xx, yy, color);
+
+                    x++;
+                }
+            }
+
+            return bit;
+        }
+
+        public Bitmap GetImage(bool colorize = false, bool normalize = false)
+        {
+            Bitmap bit = null;
+            if (colorize && colorized == null && !normalize) colorized = ToBitmap(true, false);
+            if (normalize && normalized == null && !colorize) normalized = ToBitmap(false, true);
+            if (colorize && normalize && colorizedNormalized == null) colorizedNormalized = ToBitmap(true, true);
+            if (!colorize && !normalize && original == null) original = ToBitmap();
+
+            if (colorize) bit = colorized;
+            if (normalize) bit = normalized;
+            if (colorize && normalize) bit = colorizedNormalized;
+            if (!colorize && !normalize) bit = original;
+
+            return bit;
+        }
+
+        public void Save(string pathToFile)
+        {
+            FileStream fs = new FileStream(pathToFile, FileMode.Create);
+            BinaryWriter bw = new BinaryWriter(fs);
+
+            bw.Write(signature);
+            bw.Write(width);
+            bw.Write(height);
             bw.Write(stripCount);
 
+            for (int i = 0; i < stripCount; i++)
+            {
+                bw.Write(strips[i].length);
+                bw.Write(strips[i].color.R);
+                bw.Write(strips[i].color.G);
+                bw.Write(strips[i].color.B);
+                bw.Write(strips[i].color.A);
+            }
+
             bw.Close();
+        }
+
+        // strip structure
+
+        public class SPFStrip
+        {
+            public int length;
+            public Color color;
+
+            public SPFStrip(int length, Color color)
+            {
+                this.length = length;
+                this.color = color;
+            }
         }
     }
 }
