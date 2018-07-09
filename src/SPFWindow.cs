@@ -13,11 +13,19 @@ namespace SPF
 {
     public partial class SPFWindow : Form
     {
-        Bitmap bit;
+        struct Settings
+        {
+            public Bitmap bit;
+            public SPFFile spf;
+            public Rectangle prevBound;
+            public FormWindowState prevWindowState;
+        }
+
+        Settings settings;
 
         Color toolStripColor = Color.DimGray;
         Color imageViewerColor = Color.FromArgb(85, 85, 85);
-        Bitmap transparencyBitmap = new Bitmap(@"img\transparency.png");
+        Bitmap transparencyBitmap = Properties.Resources.transparency;
         TextureBrush transparencyTexture;
 
         RectangleF rect;
@@ -26,14 +34,20 @@ namespace SPF
 
         //
 
+        bool fullScreen = false;
         float scale = 1;
         Font scaleFont = new Font("Arial", 16);
 
         //
 
-        string filter = "Strip format (*.spf)|*.spf|Portable network graphics (*.png)|*.png|Joint Photographic Experts Group (*.jpg, *.jpeg)|*.jpg;*.jpeg|Bitmap (*.bmp)|*.bmp|All files (*.*)|*.*";
-        string filter1 = "Portable network graphics (*.png)|*.png|Joint Photographic Experts Group (*.jpg, *.jpeg)|*.jpg;*.jpeg|Bitmap (*.bmp)|*.bmp|All files (*.*)|*.*";
-        string filter2 = "Strip format (*.spf)|*.spf";
+        Point draggingStartPoint, draggingPoint;
+        bool startDragging = false, selfDragging = false;
+
+        //
+
+        string filter = Properties.Resources.filter;
+        string filter1 = Properties.Resources.filter1;
+        string filter2 = Properties.Resources.filter2;
 
         OpenFileDialog openDialog;
         SaveFileDialog saveDialog;
@@ -81,23 +95,44 @@ namespace SPF
             return ( ((point.X > rect.X) && (point.X < rect.X + rect.Width)) && ((point.Y > rect.Y) && (point.Y < rect.Y + rect.Height)) );
         }
 
-        private void LoadSPF()
+        private double PointDistance(Point p1, Point p2)
         {
-            SPFInfo spfInfo = SPF.ReadSPF(pathToFile, toolStripCButton.Checked, toolStripNButton.Checked);
-            if (spfInfo == null)
-            {
-                MessageBox.Show("This file doesn't exists ");
-                return;
-            }
+            System.Windows.Point pp = new System.Windows.Point(p1.X, p1.Y);
+            System.Windows.Point pp2 = new System.Windows.Point(p2.Y, p2.Y);
 
-            bit = spfInfo.bit;
-
-            RestrictUI();
-
-            imageViewer.Invalidate();
-            stripCountLabel.Text = "Strip count: " + spfInfo.stripCount.ToString();
+            return (pp - pp2).LengthSquared;
         }
 
+        private void LoadSPF()
+        {
+            settings.spf = SPFFile.FromFile(pathToFile);
+            if (settings.spf == null)
+            {
+                MessageBox.Show(@"This file doesn't exists ¯\_(ツ)_/¯");
+                return;
+            } else
+            {
+                settings.bit = settings.spf.GetImage();
+
+                RestrictUI();
+
+                imageViewer.Invalidate();
+                stripCountLabel.Text = "Strip count: " + settings.spf.stripCount.ToString();
+            }            
+        }
+
+        private void RenderSPF()
+        {
+            if (settings.spf == null)
+            {
+                LoadSPF();
+            }
+            else
+            {
+                settings.bit = settings.spf.GetImage(toolStripCButton.Checked, toolStripNButton.Checked);
+                imageViewer.Invalidate();
+            }
+        }
         private void Browse()
         {
             string fileFormat = Path.GetExtension(pathToFile);
@@ -112,8 +147,8 @@ namespace SPF
 
             try
             {
-                bit = new Bitmap(pathToFile);
-                bit.SetResolution(96, 96);
+                settings.bit = new Bitmap(pathToFile);
+                settings.bit.SetResolution(96, 96);
 
                 RestrictUI(false);
 
@@ -175,11 +210,40 @@ namespace SPF
             {
                 ScaleUpdate(1.0f);
             }
+
+            if (e.KeyCode == Keys.F11)
+            {
+                if (fullScreen == false)
+                {
+                    settings.prevBound = Bounds;
+                    settings.prevWindowState = WindowState;
+
+                    WindowState = FormWindowState.Normal;
+                    FormBorderStyle = FormBorderStyle.None;
+                    Bounds = Screen.PrimaryScreen.Bounds;
+
+                    fullScreen = !fullScreen;
+                }
+                else
+                {
+                    WindowState = settings.prevWindowState;
+                    FormBorderStyle = FormBorderStyle.Sizable;
+
+                    Bounds = settings.prevBound;
+
+                    fullScreen = !fullScreen;
+                }
+            }
+
+            if (e.KeyCode == Keys.F12)
+            {
+                RenderSPF();
+            }
         }
 
         private void SPFWindow_DragEnter(object sender, DragEventArgs e)
         {
-            e.Effect = DragDropEffects.Move;
+            if (!selfDragging) e.Effect = DragDropEffects.Move;
         }
 
         private void SPFWindow_DragDrop(object sender, DragEventArgs e)
@@ -195,12 +259,12 @@ namespace SPF
 
         private void imageViewer_Paint(object sender, PaintEventArgs e)
         {
-            if (bit != null)
+            if (settings.bit != null)
             {
-                float left = (imageViewer.ClientSize.Width / 2) - ((bit.Width * scale) / 2);
-                float top = toolStrip1.Height + ((imageViewer.ClientSize.Height - toolStrip1.Height) / 2) - ((bit.Height * scale) / 2);
+                float left = (imageViewer.ClientSize.Width / 2) - ((settings.bit.Width * scale) / 2);
+                float top = toolStrip1.Height + ((imageViewer.ClientSize.Height - toolStrip1.Height) / 2) - ((settings.bit.Height * scale) / 2);
 
-                rect = new RectangleF(left, top, (bit.Width - 1) * scale, (bit.Height - 1) * scale);
+                rect = new RectangleF(left, top, (settings.bit.Width - 1) * scale, (settings.bit.Height - 1) * scale);
 
                 e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
                 e.Graphics.Clear(imageViewer.BackColor);
@@ -209,7 +273,7 @@ namespace SPF
 
                 e.Graphics.TranslateTransform(left, top);
                 e.Graphics.ScaleTransform(scale, scale);
-                e.Graphics.DrawImage(bit, 0, 0);
+                e.Graphics.DrawImage(settings.bit, 0, 0);
 
                 e.Graphics.ResetTransform();
 
@@ -227,14 +291,55 @@ namespace SPF
 
         private void imageViewer_MouseDown(object sender, MouseEventArgs e)
         {
-            if (bit != null) if (PointInRect(e.Location, rect)) DoDragDrop(new DataObject(DataFormats.Bitmap, bit), DragDropEffects.Copy);
+            if ((settings.bit != null) && (PointInRect(e.Location, rect)))
+            {
+                draggingStartPoint = e.Location;
+                startDragging = true;
+            }
         }
 
+        private void imageViewer_MouseUp(object sender, MouseEventArgs e)
+        {
+            startDragging = false;
+        }
+
+        private void imageViewer_MouseMove(object sender, MouseEventArgs e)
+        {
+            draggingPoint = e.Location;
+
+            if (startDragging && PointDistance(draggingPoint, draggingStartPoint) > 100 * 100)
+            {
+                selfDragging = true;
+
+                string name = Path.GetFileNameWithoutExtension(filePath.Text);
+                string newName = name + ".spf";
+                string newDir = @"C:\temp\" + newName;
+
+                string[] path = new string[1] { newDir };
+
+                DragDropEffects effect = DoDragDrop(new DataObject(DataFormats.FileDrop, path), DragDropEffects.Move);
+
+                if (effect == DragDropEffects.Move)
+                {
+                    settings.spf.Save(newDir);
+                    startDragging = false;
+                    selfDragging = false;
+                }
+
+                if (effect == DragDropEffects.None)
+                {
+                    startDragging = false;
+                    selfDragging = false;
+                }
+            }
+        }
+
+ 
         //
 
         private void renderButton_Click(object sender, EventArgs e)
         {
-            LoadSPF();
+            RenderSPF();
         }
 
         private void filePath_KeyUp(object sender, KeyEventArgs e)
@@ -257,17 +362,23 @@ namespace SPF
             saveDialog.Filter = filter2;
             if (saveDialog.ShowDialog() == DialogResult.OK)
             {
-                SPF.ConvertToSPF(saveDialog.FileName, bit);
+                SPFFile spfFile = new SPFFile(settings.bit);
+                spfFile.Save(saveDialog.FileName);
                 imageViewer.Invalidate();
             }
         }
 
+
+
         private void saveImageButton_Click(object sender, EventArgs e)
         {
+            string name = Path.GetFileNameWithoutExtension(filePath.Text);
+
             saveDialog.Filter = filter1;
+            saveDialog.FileName = name;
             if (saveDialog.ShowDialog() == DialogResult.OK)
             {
-                bit.Save(saveDialog.FileName);
+                settings.bit.Save(saveDialog.FileName);
             }
         }
     }

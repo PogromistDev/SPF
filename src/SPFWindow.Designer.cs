@@ -56,6 +56,8 @@
             this.imageViewer.TabStop = false;
             this.imageViewer.Paint += new System.Windows.Forms.PaintEventHandler(this.imageViewer_Paint);
             this.imageViewer.MouseDown += new System.Windows.Forms.MouseEventHandler(this.imageViewer_MouseDown);
+            this.imageViewer.MouseMove += new System.Windows.Forms.MouseEventHandler(this.imageViewer_MouseMove);
+            this.imageViewer.MouseUp += new System.Windows.Forms.MouseEventHandler(this.imageViewer_MouseUp);
             // 
             // toolStrip1
             // 
@@ -194,9 +196,9 @@
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.imageViewer);
             this.DoubleBuffered = true;
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.KeyPreview = true;
             this.Name = "SPFWindow";
-            this.ShowIcon = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "SPF";
             this.Load += new System.EventHandler(this.SPFWindow_Load);
