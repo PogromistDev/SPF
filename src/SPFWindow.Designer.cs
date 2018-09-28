@@ -41,6 +41,7 @@
             this.saveImageButton = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.stripCountLabel = new System.Windows.Forms.ToolStripLabel();
+            this.toolStripRButton = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.imageViewer)).BeginInit();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -69,6 +70,7 @@
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.renderButton,
             this.toolStripCButton,
+            this.toolStripRButton,
             this.toolStripNButton,
             this.toolStripSeparator2,
             this.filePath,
@@ -187,6 +189,19 @@
             this.stripCountLabel.Text = "Strip count:";
             this.stripCountLabel.Visible = false;
             // 
+            // toolStripRButton
+            // 
+            this.toolStripRButton.BackColor = System.Drawing.Color.Transparent;
+            this.toolStripRButton.CheckOnClick = true;
+            this.toolStripRButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripRButton.ForeColor = System.Drawing.Color.White;
+            this.toolStripRButton.Image = ((System.Drawing.Image)(resources.GetObject("toolStripRButton.Image")));
+            this.toolStripRButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripRButton.Name = "toolStripRButton";
+            this.toolStripRButton.Size = new System.Drawing.Size(23, 29);
+            this.toolStripRButton.Text = "R";
+            this.toolStripRButton.ToolTipText = "Colorize raw strips as one color";
+            // 
             // SPFWindow
             // 
             this.AllowDrop = true;
@@ -196,6 +211,7 @@
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.imageViewer);
             this.DoubleBuffered = true;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.KeyPreview = true;
             this.Name = "SPFWindow";
@@ -227,6 +243,7 @@
         private System.Windows.Forms.ToolStripButton toolStripCButton;
         private System.Windows.Forms.ToolStripButton toolStripNButton;
         private System.Windows.Forms.ToolStripButton saveImageButton;
+        private System.Windows.Forms.ToolStripButton toolStripRButton;
     }
 }
 

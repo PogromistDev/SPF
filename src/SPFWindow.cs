@@ -57,7 +57,7 @@ namespace SPF
             InitializeComponent();
         }
 
-        //Functionality
+        // Functionality
 
         private void RestrictUI(bool spf = true)
         {
@@ -65,6 +65,7 @@ namespace SPF
             {
                 renderButton.Visible = true;
                 toolStripCButton.Visible = true;
+                toolStripRButton.Visible = true;
                 toolStripNButton.Visible = true;
                 convertToSpfButton.Visible = false;
                 saveImageButton.Visible = true;
@@ -73,6 +74,7 @@ namespace SPF
             {
                 renderButton.Visible = false;
                 toolStripCButton.Visible = false;
+                toolStripRButton.Visible = false;
                 toolStripNButton.Visible = false;
                 convertToSpfButton.Visible = true;
                 saveImageButton.Visible = false;
@@ -84,6 +86,7 @@ namespace SPF
         {
             renderButton.Visible = false;
             toolStripCButton.Visible = false;
+            toolStripRButton.Visible = false;
             toolStripNButton.Visible = false;
             convertToSpfButton.Visible = false;
             saveImageButton.Visible = false;
@@ -103,6 +106,8 @@ namespace SPF
             return (pp - pp2).LengthSquared;
         }
 
+        //
+
         private void LoadSPF()
         {
             settings.spf = SPFFile.FromFile(pathToFile);
@@ -110,7 +115,8 @@ namespace SPF
             {
                 MessageBox.Show(@"This file doesn't exists ¯\_(ツ)_/¯");
                 return;
-            } else
+            }
+            else
             {
                 settings.bit = settings.spf.GetImage();
 
@@ -129,10 +135,11 @@ namespace SPF
             }
             else
             {
-                settings.bit = settings.spf.GetImage(toolStripCButton.Checked, toolStripNButton.Checked);
+                settings.bit = settings.spf.GetImage(toolStripCButton.Checked, toolStripNButton.Checked, toolStripRButton.Checked);
                 imageViewer.Invalidate();
             }
         }
+
         private void Browse()
         {
             string fileFormat = Path.GetExtension(pathToFile);
@@ -154,9 +161,8 @@ namespace SPF
 
                 filePath.Text = pathToFile;
                 imageViewer.Invalidate();
-
-                
             }
+
             catch (Exception)
             {
                 MessageBox.Show(fileFormat + @" file format is not supported ¯\_(ツ)_/¯");
@@ -170,7 +176,7 @@ namespace SPF
             imageViewer.Invalidate();
         }
 
-        //Events
+        // Events
 
         private void SPFWindow_Load(object sender, EventArgs e)
         {
@@ -238,6 +244,11 @@ namespace SPF
             if (e.KeyCode == Keys.F12)
             {
                 RenderSPF();
+            }
+
+            if (e.KeyCode == Keys.Delete)
+            {
+                settings.spf.ClearCache();
             }
         }
 
@@ -362,13 +373,11 @@ namespace SPF
             saveDialog.Filter = filter2;
             if (saveDialog.ShowDialog() == DialogResult.OK)
             {
-                SPFFile spfFile = new SPFFile(settings.bit);
+                SPFFile spfFile = SPFFile.FromBitmap(settings.bit);
                 spfFile.Save(saveDialog.FileName);
                 imageViewer.Invalidate();
             }
         }
-
-
 
         private void saveImageButton_Click(object sender, EventArgs e)
         {
