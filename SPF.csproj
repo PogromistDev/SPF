@@ -90,5 +90,8 @@
   <ItemGroup>
     <Folder Include="app\img\" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="bin\Debug\img\transparency.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
