@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 
 namespace SPF
@@ -108,7 +109,7 @@ namespace SPF
         {
             FileStream fs = new FileStream(pathToFile, FileMode.Open);
 
-            SPFFile spfFile = SPFFile.FromStream(fs);
+            SPFFile spfFile = FromStream(fs);
             return spfFile;
         }
 
@@ -200,6 +201,8 @@ namespace SPF
 
             spfFile.stripCount = stripCount;
             spfFile.strips = strips.ToArray();
+            spfFile.original = bit;
+
             return spfFile;
         }
 

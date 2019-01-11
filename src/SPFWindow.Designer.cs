@@ -33,6 +33,7 @@
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.renderButton = new System.Windows.Forms.ToolStripButton();
             this.toolStripCButton = new System.Windows.Forms.ToolStripButton();
+            this.toolStripRButton = new System.Windows.Forms.ToolStripButton();
             this.toolStripNButton = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.filePath = new System.Windows.Forms.ToolStripTextBox();
@@ -41,7 +42,8 @@
             this.saveImageButton = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.stripCountLabel = new System.Windows.Forms.ToolStripLabel();
-            this.toolStripRButton = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            this.closeButton = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.imageViewer)).BeginInit();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -52,13 +54,10 @@
             this.imageViewer.Dock = System.Windows.Forms.DockStyle.Fill;
             this.imageViewer.Location = new System.Drawing.Point(0, 0);
             this.imageViewer.Name = "imageViewer";
-            this.imageViewer.Size = new System.Drawing.Size(1136, 681);
+            this.imageViewer.Size = new System.Drawing.Size(1008, 681);
             this.imageViewer.TabIndex = 0;
             this.imageViewer.TabStop = false;
             this.imageViewer.Paint += new System.Windows.Forms.PaintEventHandler(this.imageViewer_Paint);
-            this.imageViewer.MouseDown += new System.Windows.Forms.MouseEventHandler(this.imageViewer_MouseDown);
-            this.imageViewer.MouseMove += new System.Windows.Forms.MouseEventHandler(this.imageViewer_MouseMove);
-            this.imageViewer.MouseUp += new System.Windows.Forms.MouseEventHandler(this.imageViewer_MouseUp);
             // 
             // toolStrip1
             // 
@@ -78,13 +77,15 @@
             this.convertToSpfButton,
             this.saveImageButton,
             this.toolStripSeparator1,
-            this.stripCountLabel});
+            this.stripCountLabel,
+            this.toolStripSeparator3,
+            this.closeButton});
             this.toolStrip1.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.HorizontalStackWithOverflow;
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.RenderMode = System.Windows.Forms.ToolStripRenderMode.Professional;
             this.toolStrip1.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.toolStrip1.Size = new System.Drawing.Size(1136, 32);
+            this.toolStrip1.Size = new System.Drawing.Size(1008, 32);
             this.toolStrip1.TabIndex = 7;
             // 
             // renderButton
@@ -111,6 +112,19 @@
             this.toolStripCButton.Size = new System.Drawing.Size(23, 29);
             this.toolStripCButton.Text = "C";
             this.toolStripCButton.ToolTipText = "Colorize strips";
+            // 
+            // toolStripRButton
+            // 
+            this.toolStripRButton.BackColor = System.Drawing.Color.Transparent;
+            this.toolStripRButton.CheckOnClick = true;
+            this.toolStripRButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripRButton.ForeColor = System.Drawing.Color.White;
+            this.toolStripRButton.Image = ((System.Drawing.Image)(resources.GetObject("toolStripRButton.Image")));
+            this.toolStripRButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripRButton.Name = "toolStripRButton";
+            this.toolStripRButton.Size = new System.Drawing.Size(23, 29);
+            this.toolStripRButton.Text = "R";
+            this.toolStripRButton.ToolTipText = "Colorize raw strips as one color";
             // 
             // toolStripNButton
             // 
@@ -189,31 +203,35 @@
             this.stripCountLabel.Text = "Strip count:";
             this.stripCountLabel.Visible = false;
             // 
-            // toolStripRButton
+            // toolStripSeparator3
             // 
-            this.toolStripRButton.BackColor = System.Drawing.Color.Transparent;
-            this.toolStripRButton.CheckOnClick = true;
-            this.toolStripRButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripRButton.ForeColor = System.Drawing.Color.White;
-            this.toolStripRButton.Image = ((System.Drawing.Image)(resources.GetObject("toolStripRButton.Image")));
-            this.toolStripRButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripRButton.Name = "toolStripRButton";
-            this.toolStripRButton.Size = new System.Drawing.Size(23, 29);
-            this.toolStripRButton.Text = "R";
-            this.toolStripRButton.ToolTipText = "Colorize raw strips as one color";
+            this.toolStripSeparator3.Name = "toolStripSeparator3";
+            this.toolStripSeparator3.Size = new System.Drawing.Size(6, 32);
+            // 
+            // closeButton
+            // 
+            this.closeButton.BackColor = System.Drawing.Color.Transparent;
+            this.closeButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.closeButton.ForeColor = System.Drawing.Color.White;
+            this.closeButton.Image = ((System.Drawing.Image)(resources.GetObject("closeButton.Image")));
+            this.closeButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.closeButton.Name = "closeButton";
+            this.closeButton.Size = new System.Drawing.Size(40, 29);
+            this.closeButton.Text = "Close";
+            this.closeButton.Click += new System.EventHandler(this.closeButton_Click);
             // 
             // SPFWindow
             // 
             this.AllowDrop = true;
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
             this.BackColor = System.Drawing.Color.Black;
-            this.ClientSize = new System.Drawing.Size(1136, 681);
+            this.ClientSize = new System.Drawing.Size(1008, 681);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.imageViewer);
             this.DoubleBuffered = true;
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.KeyPreview = true;
+            this.MinimumSize = new System.Drawing.Size(640, 70);
             this.Name = "SPFWindow";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "SPF";
@@ -244,6 +262,8 @@
         private System.Windows.Forms.ToolStripButton toolStripNButton;
         private System.Windows.Forms.ToolStripButton saveImageButton;
         private System.Windows.Forms.ToolStripButton toolStripRButton;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
+        private System.Windows.Forms.ToolStripButton closeButton;
     }
 }
 
