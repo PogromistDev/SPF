@@ -209,12 +209,16 @@ namespace SPF
         // methods
 
         // convert spf to bitmap
-        public Bitmap ToBitmap(bool colorize = false, bool normalize = false, bool colorizeRawStripAsOneColor = false)
+        public unsafe Bitmap ToBitmap(bool colorize = false, bool normalize = false, bool colorizeRawStripAsOneColor = false)
         {
             Bitmap bit = new Bitmap(width, height);
             Color color = Color.Black;
             Random rand = new Random();
             int x = 0, xx = 0, yy = 0, length;
+
+            BitmapData bitData = bit.LockBits(new Rectangle(0, 0, bit.Width, bit.Height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+
+            byte* bitScan = (byte*)bitData.Scan0;
 
             for (int i = 0; i < stripCount; i++)
             {
@@ -248,7 +252,14 @@ namespace SPF
 
                         OffsetToCoordinates(ref xx, ref yy, x, width);
 
-                        bit.SetPixel(xx, yy, color);
+                        int off = yy * (bit.Width * 4) + (xx * 4);
+
+                        bitScan[off] = color.B;
+                        bitScan[off + 1] = color.G;
+                        bitScan[off + 2] = color.R;
+                        bitScan[off + 3] = color.A;
+
+                        //bit.SetPixel(xx, yy, color);
 
                         x++;
                     }
@@ -267,13 +278,22 @@ namespace SPF
                     {
                         OffsetToCoordinates(ref xx, ref yy, x, width);
 
-                        bit.SetPixel(xx, yy, color);
+                        int off = yy * (bit.Width * 4) + (xx * 4);
+
+                        bitScan[off] = color.B;
+                        bitScan[off + 1] = color.G;
+                        bitScan[off + 2] = color.R;
+                        bitScan[off + 3] = color.A;
+
+                        //bit.SetPixel(xx, yy, color);
 
                         x++;
                     }
                 }
                 
             }
+
+            bit.UnlockBits(bitData);
 
             return bit;
         }
